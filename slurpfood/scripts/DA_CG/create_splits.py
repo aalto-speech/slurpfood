@@ -119,6 +119,30 @@ def scenario_to_count(data):
     return sce2count
 
 
+def fileid_to_slurpid(slurp_data_train, slurp_data_dev, slurp_data_test):
+    f_id_s_id = {}
+    for elem in slurp_data_train:
+        json_data = json.loads(elem)
+        slurp_id = json_data["slurp_id"]
+        for rec in json_data["recordings"]:
+            file_id = rec["file"]
+            f_id_s_id[file_id] = slurp_id
+    for elem in slurp_data_dev:
+        json_data = json.loads(elem)
+        slurp_id = json_data["slurp_id"]
+        for rec in json_data["recordings"]:
+            file_id = rec["file"]
+            f_id_s_id[file_id] = slurp_id
+    for elem in slurp_data_test:
+        json_data = json.loads(elem)
+        slurp_id = json_data["slurp_id"]
+        for rec in json_data["recordings"]:
+            file_id = rec["file"]
+            f_id_s_id[file_id] = slurp_id
+
+    return f_id_s_id
+
+
 def prepare_speechbrain(data):
     data_obj = {}
     for elem in data:
@@ -208,7 +232,6 @@ def create_cg_split(data_sb, intents, intent2id, n_samples):
                     "audio_len_2": audio_len_2
                 }
 
-    print(len(data_obj))
     return data_obj
 
 
@@ -315,7 +338,7 @@ def create_non_cg_split(data, cg_data, sce2count, train_intents, test_intents, i
     return data_obj
 
 
-def save_cg_splits(train_obj_cg, dev_obj_cg, test_obj, save_path):
+def save_cg_splits(train_obj_cg, dev_obj_cg, test_obj, f_id_s_id, save_path):
     # Save the splits as JSON files in a SpeechBrain format
     with open(os.path.join(save_path, "train_cg.json"), "w") as f:
         json.dump(train_obj_cg, f, indent=4)
@@ -326,40 +349,50 @@ def save_cg_splits(train_obj_cg, dev_obj_cg, test_obj, save_path):
 
     # Save the splits as ID, scenario CSV files
     with open(os.path.join(save_path, "train_cg.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id_1,slurp_id_2,file_id,scenario\n")
         for elem in train_obj_cg:
-            f.write(elem + "," + train_obj_cg[elem]["scenario_1"] + "\n")
+            slurp_id_1 = str(f_id_s_id[elem.split("+")[0]])
+            slurp_id_2 = str(f_id_s_id[elem.split("+")[1]])
+            f.write(slurp_id_1 + "," + slurp_id_2 + "," + elem + "," + train_obj_cg[elem]["scenario_1"] + "\n")
     
     with open(os.path.join(save_path, "dev_cg.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id_1,slurp_id_2,file_id,scenario\n")
         for elem in dev_obj_cg:
-            f.write(elem + "," + dev_obj_cg[elem]["scenario_1"] + "\n")
+            slurp_id_1 = str(f_id_s_id[elem.split("+")[0]])
+            slurp_id_2 = str(f_id_s_id[elem.split("+")[1]])
+            f.write(slurp_id_1 + "," + slurp_id_2 + "," + elem + "," + dev_obj_cg[elem]["scenario_1"] + "\n")
 
     with open(os.path.join(save_path, "test.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id_1,slurp_id_2,file_id,scenario\n")
         for elem in test_obj:
-            f.write(elem + "," + test_obj[elem]["scenario_1"] + "\n")
+            slurp_id_1 = str(f_id_s_id[elem.split("+")[0]])
+            slurp_id_2 = str(f_id_s_id[elem.split("+")[1]])
+            f.write(slurp_id_1 + "," + slurp_id_2 + "," + elem + "," + test_obj[elem]["scenario_1"] + "\n")
 
 
 
 
-def save_non_cg_splits(train_obj_non_cg, dev_obj_non_cg, save_path):
+def save_non_cg_splits(train_obj_non_cg, dev_obj_non_cg, f_id_s_id, save_path):
     # Save the splits as JSON files in a SpeechBrain format
     with open(os.path.join(save_path, "train_non_cg.json"), "w") as f:
         json.dump(train_obj_non_cg, f, indent=4)
     with open(os.path.join(save_path, "dev_non_cg.json"), "w") as f:
         json.dump(dev_obj_non_cg, f, indent=4)
 
-     # Save the splits as ID, scenario CSV files
+    # Save the splits as ID, scenario CSV files
     with open(os.path.join(save_path, "train_non_cg.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id_1,slurp_id_2,file_id,scenario\n")
         for elem in train_obj_non_cg:
-            f.write(elem + "," + train_obj_non_cg[elem]["scenario_1"] + "\n")
+            slurp_id_1 = str(f_id_s_id[elem.split("+")[0]])
+            slurp_id_2 = str(f_id_s_id[elem.split("+")[1]])
+            f.write(slurp_id_1 + "," + slurp_id_2 + "," + elem + "," + train_obj_non_cg[elem]["scenario_1"] + "\n")
     
     with open(os.path.join(save_path, "dev_non_cg.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id_1,slurp_id_2,file_id,scenario\n")
         for elem in dev_obj_non_cg:
-            f.write(elem + "," + dev_obj_non_cg[elem]["scenario_1"] + "\n")
+            slurp_id_1 = str(f_id_s_id[elem.split("+")[0]])
+            slurp_id_2 = str(f_id_s_id[elem.split("+")[1]])
+            f.write(slurp_id_1 + "," + slurp_id_2 + "," + elem + "," + dev_obj_non_cg[elem]["scenario_1"] + "\n")
 
 
 if __name__ == "__main__":
@@ -373,6 +406,9 @@ if __name__ == "__main__":
         dev_data = f.readlines()
     with open(os.path.join(original_slurp_path, "test.jsonl"), "r") as f:
         test_data = f.readlines()
+
+    # Get file_id to slurp_id mapping
+    f_id_s_id = fileid_to_slurpid(train_data, dev_data, test_data)
     
     # Prepare data in a speechbrain format
     train_data_sb = prepare_speechbrain(train_data)
@@ -390,7 +426,7 @@ if __name__ == "__main__":
     test_obj = create_cg_split(test_data_sb, test_intents, intent2id_test, 10)
 
     # Save the CG splits
-    save_cg_splits(train_obj_cg, dev_obj_cg, test_obj, save_path)
+    save_cg_splits(train_obj_cg, dev_obj_cg, test_obj, f_id_s_id, save_path)
 
 
     # Create the non-CG splits
@@ -401,4 +437,4 @@ if __name__ == "__main__":
     dev_obj_non_cg = create_non_cg_split(dev_data_sb, dev_obj_cg, sce2count_dev, train_intents, test_intents, intent2id_dev, 15)
 
     # Save the non-CG splits
-    save_non_cg_splits(train_obj_non_cg, dev_obj_non_cg, save_path)
+    save_non_cg_splits(train_obj_non_cg, dev_obj_non_cg, f_id_s_id, save_path)
