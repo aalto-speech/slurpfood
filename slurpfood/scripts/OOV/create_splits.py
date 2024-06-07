@@ -130,7 +130,6 @@ def create_non_oov_split(data, oov_data, diff_sce2count, diff_sce2id, test_label
                 elem = json.loads(elem)
                 scenario = elem["scenario"]
                 action = elem["action"]
-                #intent = elem["intent"]
                 intent = (scenario + "_" + action).rstrip()
                 transcript = elem["sentence"]
 
@@ -196,7 +195,32 @@ def scenario_to_id(data, from_split):
     return sce2id
 
 
-def save_oov_data(train_data_obj, devel_data_obj, test_data_obj, save_path):
+def fileid_to_slurpid(slurp_data_train, slurp_data_dev, slurp_data_test):
+    f_id_s_id = {}
+    for elem in slurp_data_train:
+        json_data = json.loads(elem)
+        slurp_id = json_data["slurp_id"]
+        for rec in json_data["recordings"]:
+            file_id = rec["file"]
+            f_id_s_id[file_id] = slurp_id
+    for elem in slurp_data_dev:
+        json_data = json.loads(elem)
+        slurp_id = json_data["slurp_id"]
+        for rec in json_data["recordings"]:
+            file_id = rec["file"]
+            f_id_s_id[file_id] = slurp_id
+    for elem in slurp_data_test:
+        json_data = json.loads(elem)
+        slurp_id = json_data["slurp_id"]
+        for rec in json_data["recordings"]:
+            file_id = rec["file"]
+            f_id_s_id[file_id] = slurp_id
+
+    return f_id_s_id
+
+
+
+def save_oov_data(train_data_obj, devel_data_obj, test_data_obj, f_id_s_id, save_path):
     # Save the splits as JSON files in a SpeechBrain format
     with open(os.path.join(save_path, "train_oov.json"), "w") as f:
         json.dump(train_data_obj, f, indent=4)
@@ -207,22 +231,25 @@ def save_oov_data(train_data_obj, devel_data_obj, test_data_obj, save_path):
     
     # Save the splits as ID, scenario CSV files
     with open(os.path.join(save_path, "train_oov.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id,file_id,scenario\n")
         for elem in train_data_obj:
-            f.write(elem + "," + train_data_obj[elem]["scenario"] + "\n")
+            slurp_id = str(f_id_s_id[elem])
+            f.write(slurp_id + "," + elem + "," + train_data_obj[elem]["scenario"] + "\n")
     
     with open(os.path.join(save_path, "dev_oov.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id,file_id,scenario\n")
         for elem in devel_data_obj:
-            f.write(elem + "," + devel_data_obj[elem]["scenario"] + "\n")
+            slurp_id = str(f_id_s_id[elem])
+            f.write(slurp_id + "," + elem + "," + devel_data_obj[elem]["scenario"] + "\n")
 
     with open(os.path.join(save_path, "test.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id,file_id,scenario\n")
         for elem in test_data_obj:
-            f.write(elem + "," + test_data_obj[elem]["scenario"] + "\n")
+            slurp_id = str(f_id_s_id[elem])
+            f.write(slurp_id + "," + elem + "," + test_data_obj[elem]["scenario"] + "\n")
 
 
-def save_non_oov_data(train_data_obj, devel_data_obj, save_path):
+def save_non_oov_data(train_data_obj, devel_data_obj, f_id_s_id, save_path):
     # Save the splits as JSON files in a SpeechBrain format
     with open(os.path.join(save_path, "train_non_oov.json"), "w") as f:
         json.dump(train_data_obj, f, indent=4)
@@ -231,14 +258,16 @@ def save_non_oov_data(train_data_obj, devel_data_obj, save_path):
 
     # Save the splits as ID, scenario CSV files
     with open(os.path.join(save_path, "train_non_oov.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id,file_id,scenario\n")
         for elem in train_data_obj:
-            f.write(elem + "," + train_data_obj[elem]["scenario"] + "\n")
+            slurp_id = str(f_id_s_id[elem])
+            f.write(slurp_id + "," + elem + "," + train_data_obj[elem]["scenario"] + "\n")
 
     with open(os.path.join(save_path, "dev_non_oov.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id,file_id,scenario\n")
         for elem in devel_data_obj:
-            f.write(elem + "," + devel_data_obj[elem]["scenario"] + "\n")
+            slurp_id = str(f_id_s_id[elem])
+            f.write(slurp_id + "," + elem + "," + devel_data_obj[elem]["scenario"] + "\n")
 
 
 if __name__ == "__main__":
@@ -252,10 +281,15 @@ if __name__ == "__main__":
     with open(os.path.join(original_slurp_path, "test.jsonl"), "r") as f:
         test_data = f.readlines()
 
+
     test_labels = ["calendar_query", "calendar_remove", "play_audiobook", "play_game", "general_joke", "qa_maths", 
                 "qa_definition", "qa_stock", "email_addcontact", "email_sendemail", "datetime_convert", "list_remove", 
                 "transport_taxi", "transport_traffic", "iot_hue_lightup", "iot_coffee", "iot_wemo_off", "recommendation_movies", 
                 "alarm_query", "music_likeness", "music_dislikeness", "takeaway_order", "audio_volume_down", "audio_volume_other"]
+
+
+    # Get file_id to slurp_id mapping
+    f_id_s_id = fileid_to_slurpid(train_data, devel_data, test_data)
 
 
     # Create the OOV splits
@@ -264,7 +298,7 @@ if __name__ == "__main__":
     oov_test_data_obj = create_oov_split(test_data, test_labels, "test")
     
     # Save the OOV splits
-    save_oov_data(oov_train_data_obj, oov_devel_data_obj, oov_test_data_obj, save_path)
+    save_oov_data(oov_train_data_obj, oov_devel_data_obj, oov_test_data_obj, f_id_s_id, save_path)
 
 
     # Create the non-OOV splits
@@ -279,4 +313,4 @@ if __name__ == "__main__":
     non_oov_data_obj_devel = create_non_oov_split(devel_data, oov_devel_data_obj, oov_sce2count_devel, oov_sce2id_devel, test_labels)
 
     # save the non-OOV data
-    save_non_oov_data(non_oov_data_obj_train, non_oov_data_obj_devel, save_path)
+    save_non_oov_data(non_oov_data_obj_train, non_oov_data_obj_devel, f_id_s_id, save_path)
