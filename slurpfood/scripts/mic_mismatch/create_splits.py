@@ -11,7 +11,28 @@ def load_data(data_path):
     return data
 
 
-def save_splits(save_path, data_obj_train, data_obj_dev, data_obj_headset, data_obj_other):
+def fileid_to_slurpid(slurp_data_train, slurp_data_dev, slurp_data_test):
+    f_id_s_id = {}
+    for elem in slurp_data_train:
+        slurp_id = elem["slurp_id"]
+        for rec in elem["recordings"]:
+            file_id = rec["file"]
+            f_id_s_id[file_id] = slurp_id
+    for elem in slurp_data_dev:
+        slurp_id = elem["slurp_id"]
+        for rec in elem["recordings"]:
+            file_id = rec["file"]
+            f_id_s_id[file_id] = slurp_id
+    for elem in slurp_data_test:
+        slurp_id = elem["slurp_id"]
+        for rec in elem["recordings"]:
+            file_id = rec["file"]
+            f_id_s_id[file_id] = slurp_id
+    
+    return f_id_s_id
+
+
+def save_splits(save_path, data_obj_train, data_obj_dev, data_obj_headset, data_obj_other, f_id_s_id):
     # Save as Json files in a SpeechBrain JSON format
     with open(os.path.join(save_path, "train.json"), "w") as f:
         json.dump(data_obj_train, f, indent=4)
@@ -24,27 +45,31 @@ def save_splits(save_path, data_obj_train, data_obj_dev, data_obj_headset, data_
 
     # Save as ID,label CSV file
     with open(os.path.join(save_path, "train.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id,file_id,scenario\n")
         for elem in data_obj_train:
-            f.write(elem + "," + data_obj_train[elem]["scenario"] + "\n")
+            slurp_id = str(f_id_s_id[elem])
+            f.write(slurp_id + "," + elem + "," + data_obj_train[elem]["scenario"] + "\n")
 
     with open(os.path.join(save_path, "dev.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id,file_id,scenario\n")
         for elem in data_obj_dev:
-            f.write(elem + "," + data_obj_dev[elem]["scenario"] + "\n")
+            slurp_id = str(f_id_s_id[elem])
+            f.write(slurp_id + "," + elem + "," + data_obj_dev[elem]["scenario"] + "\n")
 
     with open(os.path.join(save_path, "test_headset.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id,file_id,scenario\n")
         for elem in data_obj_headset:
-            f.write(elem + "," + data_obj_headset[elem]["scenario"] + "\n")
+            slurp_id = str(f_id_s_id[elem])
+            f.write(slurp_id + "," + elem + "," + data_obj_headset[elem]["scenario"] + "\n")
 
     with open(os.path.join(save_path, "test_other.csv"), "w") as f:
-        f.write("id,scenario\n")
+        f.write("slurp_id,file_id,scenario\n")
         for elem in data_obj_other:
-            f.write(elem + "," + data_obj_other[elem]["scenario"] + "\n")
+            slurp_id = str(f_id_s_id[elem])
+            f.write(slurp_id + "," + elem + "," + data_obj_other[elem]["scenario"] + "\n")
 
 
-def create_splits(save_path, train_data, dev_data, test_data):
+def create_splits(save_path, train_data, dev_data, test_data, f_id_s_id):
     '''
     This function is used to create the training and development and testing splits.
     Train and dev splits contain only the recordings made with a headset.
@@ -147,9 +172,7 @@ def create_splits(save_path, train_data, dev_data, test_data):
 
 
     # Save the splits
-    save_splits(save_path, data_obj_train, data_obj_dev, data_obj_headset, data_obj_other)
-    
-    
+    save_splits(save_path, data_obj_train, data_obj_dev, data_obj_headset, data_obj_other, f_id_s_id)
 
 
 
@@ -161,4 +184,7 @@ if __name__ == "__main__":
     dev_data = load_data(os.path.join(path_to_slurp, "devel.jsonl"))
     test_data = load_data(os.path.join(path_to_slurp, "test.jsonl"))
 
-    create_splits(save_path, train_data, dev_data, test_data)
+    # Get file_id to slurp_id mapping
+    f_id_s_id = fileid_to_slurpid(train_data, dev_data, test_data)
+
+    create_splits(save_path, train_data, dev_data, test_data, f_id_s_id)
