@@ -1,6 +1,6 @@
 # SLURPFOOD
 
-This repository contains the SLURPFOOD splits proposed in the paper "Out-of-distribution generalisation in spoken language understanding".
+This repository contains the SLURPFOOD splits proposed in the paper "[Out-of-distribution generalisation in spoken language understanding](https://arxiv.org/abs/2407.07425)".
 Additionally, it contains scripts for generating the splits and creating the baselines.
 
 To start, you need to first clone the original [SLURP repository](https://github.com/pswietojanski/slurp) in the parent directory.
