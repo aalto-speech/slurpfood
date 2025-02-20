@@ -39,8 +39,8 @@ The goal of these splits is to test the generalisation of the models in mismatch
 To cite the paper, use:
 
 `
-@inproceedings{porjazovski24_interspeech,
-  title     = {Out-of-distribution generalisation in spoken language understanding},
+@inproceedings{porjazovski24_interspeech, \\
+  title     = {Out-of-distribution generalisation in spoken language understanding}, \\
   author    = {Dejan Porjazovski and Anssi Moisio and Mikko Kurimo},
   year      = {2024},
   booktitle = {Interspeech 2024},
